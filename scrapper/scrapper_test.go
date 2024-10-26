@@ -37,6 +37,10 @@ func TestGetCarModel(t *testing.T) {
 	// Arrange
 	server := localHtmlSetup()
 	s := New()
+	expected := Car{
+		Model: "Mercedes-Benz A 200 d AMG Line",
+		Link:  "https://www.standvirtual.com/carros/anuncio/mercedes-benz-a-200-d-amg-line-ID8PKMqL.html",
+	}
 
 	//Act
 	var cars []Car
@@ -49,13 +53,16 @@ func TestGetCarModel(t *testing.T) {
 	}
 
 	assert.NotNil(t, cars)
-	assert.EqualValues(t, "Mercedes-Benz A 200 d AMG Line", cars[0].Model)
+	assert.EqualValues(t, expected, cars[0])
 }
 
 func TestGetCarPower(t *testing.T) {
 	// Arrange
 	server := localHtmlSetup()
 	s := New()
+	expected := Car{
+		Power: "2 143 cm3 • 136 cv",
+	}
 
 	//Act
 	var cars []Car
@@ -68,13 +75,18 @@ func TestGetCarPower(t *testing.T) {
 	}
 
 	assert.NotNil(t, cars)
-	assert.EqualValues(t, "2 143 cm3 • 136 cv", cars[0].Power)
+	assert.EqualValues(t, expected, cars[0])
 }
 
 func TestGetCarDetails(t *testing.T) {
 	// Arrange
 	server := localHtmlSetup()
 	s := New()
+	expected := Car{
+		Mileage: "92 580 km",
+		Fuel:    "Diesel",
+		Year:    "2017",
+	}
 
 	//Act
 	var cars []Car
@@ -87,15 +99,16 @@ func TestGetCarDetails(t *testing.T) {
 	}
 
 	assert.NotNil(t, cars)
-	assert.EqualValues(t, "92 580 km", cars[0].Mileage)
-	assert.EqualValues(t, "Diesel", cars[0].Fuel)
-	assert.EqualValues(t, "2017", cars[0].Year)
+	assert.EqualValues(t, expected, cars[0])
 }
 
 func TestGetCarPrice(t *testing.T) {
 	// Arrange
 	server := localHtmlSetup()
 	s := New()
+	expected := Car{
+		Price: "23 990",
+	}
 
 	//Act
 	var cars []Car
@@ -108,5 +121,26 @@ func TestGetCarPrice(t *testing.T) {
 	}
 
 	assert.NotNil(t, cars)
-	assert.EqualValues(t, "23 990", cars[0].Price)
+	assert.EqualValues(t, expected, cars[0])
+}
+
+func TestPagination(t *testing.T) {
+	// Arrange
+	server := localHtmlSetup()
+	s := New()
+	expected := 1325
+
+	//Act
+	var pagination Pagination
+	s.StartPagination(&pagination)
+
+	//Assert
+	err := s.Visit(server.URL)
+	if err != nil {
+		panic(err)
+	}
+	actual := pagination.pages[len(pagination.pages)-1].Number
+
+	assert.NotNil(t, pagination)
+	assert.EqualValues(t, expected, actual)
 }

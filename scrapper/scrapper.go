@@ -1,22 +1,26 @@
 package scrapper
 
 import (
+	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/gocolly/colly"
 )
 
 const (
-	carCard          = ".ooa-yca59n.epwfahw0"
-	titleSection     = ".epwfahw9.ooa-1ed90th.er34gjf0"
-	carPowerSection  = ".epwfahw10.ooa-1tku07r.er34gjf0"
-	detailsSection   = ".ooa-1uwk9ii.epwfahw11"
-	detail           = ".ooa-1omlbtp.epwfahw13"
-	detailParameter  = "data-parameter"
-	mileageParameter = "mileage"
-	fuelParameter    = "fuel_type"
-	yearParameter    = "first_registration_year"
-	priceSection     = ".epwfahw16.ooa-1n2paoq.er34gjf0"
+	carCard           = ".ooa-yca59n.epwfahw0"
+	titleSection      = ".epwfahw9.ooa-1ed90th.er34gjf0"
+	carPowerSection   = ".epwfahw10.ooa-1tku07r.er34gjf0"
+	detailsSection    = ".ooa-1uwk9ii.epwfahw11"
+	detail            = ".ooa-1omlbtp.epwfahw13"
+	detailParameter   = "data-parameter"
+	mileageParameter  = "mileage"
+	fuelParameter     = "fuel_type"
+	yearParameter     = "first_registration_year"
+	priceSection      = ".epwfahw16.ooa-1n2paoq.er34gjf0"
+	paginationSection = ".pagination-list.ooa-1vdlgt7"
+	paginationItem    = ".ooa-g4wbjr.e1y5xfcl0"
 )
 
 type Car struct {
@@ -27,6 +31,15 @@ type Car struct {
 	Year    string
 	Power   string
 	Link    string
+}
+
+type Pagination struct {
+	pages   []Page
+	current int
+}
+type Page struct {
+	Url    string
+	Number int
 }
 
 type Scrapper struct {
@@ -49,6 +62,45 @@ func (s *Scrapper) StartCars(cars *[]Car, opts ...func(*Car, *colly.HTMLElement)
 		// Check if it's already in DB
 		*cars = append(*cars, car)
 		// Notify
+	})
+}
+
+func (s *Scrapper) StartPagination(pages *Pagination) {
+	// Fetch Pagination Info and process it
+	s.OnHTML(paginationSection, func(e *colly.HTMLElement) {
+		// If there is no pagination info, get it
+		if len(pages.pages) == 0 {
+			GetPaginationInfo(pages, e)
+		}
+		// Wait until pagination info is filled
+		s.OnScraped(func(_ *colly.Response) {
+			GoToNextPage(pages, e)
+		})
+	})
+}
+
+func GoToNextPage(p *Pagination, e *colly.HTMLElement) {
+	if isFinalPage(p) {
+		return
+	}
+	p.current += 1
+	err := e.Request.Visit(p.pages[p.current-1].Url)
+	if err != nil {
+		panic(fmt.Errorf("error visiting page! %w", err))
+	}
+}
+
+func isFinalPage(p *Pagination) bool {
+	return p.current != p.pages[len(p.pages)-1].Number
+}
+
+func GetPaginationInfo(p *Pagination, e *colly.HTMLElement) {
+	e.ForEach(paginationItem, func(_ int, e1 *colly.HTMLElement) {
+		i, err := strconv.Atoi(e1.Text)
+		if err != nil {
+			panic(err)
+		}
+		p.pages = append(p.pages, Page{Url: e1.Attr("href"), Number: i})
 	})
 }
 
