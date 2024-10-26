@@ -37,13 +37,13 @@ func TestGetCarModel(t *testing.T) {
 	// Arrange
 	server := localHtmlSetup()
 	s := New()
-	expected := Car{
+	expected := CarScrape{
 		Model: "Mercedes-Benz A 200 d AMG Line",
 		Link:  "https://www.standvirtual.com/carros/anuncio/mercedes-benz-a-200-d-amg-line-ID8PKMqL.html",
 	}
 
 	//Act
-	var cars []Car
+	var cars []CarScrape
 	s.StartCars(&cars, getCarModel)
 
 	//Assert
@@ -60,12 +60,12 @@ func TestGetCarPower(t *testing.T) {
 	// Arrange
 	server := localHtmlSetup()
 	s := New()
-	expected := Car{
+	expected := CarScrape{
 		Power: "2 143 cm3 • 136 cv",
 	}
 
 	//Act
-	var cars []Car
+	var cars []CarScrape
 	s.StartCars(&cars, getCarPower)
 
 	//Assert
@@ -82,14 +82,14 @@ func TestGetCarDetails(t *testing.T) {
 	// Arrange
 	server := localHtmlSetup()
 	s := New()
-	expected := Car{
+	expected := CarScrape{
 		Mileage: "92 580 km",
 		Fuel:    "Diesel",
 		Year:    "2017",
 	}
 
 	//Act
-	var cars []Car
+	var cars []CarScrape
 	s.StartCars(&cars, getCarDetails)
 
 	//Assert
@@ -106,12 +106,12 @@ func TestGetCarPrice(t *testing.T) {
 	// Arrange
 	server := localHtmlSetup()
 	s := New()
-	expected := Car{
+	expected := CarScrape{
 		Price: "23 990",
 	}
 
 	//Act
-	var cars []Car
+	var cars []CarScrape
 	s.StartCars(&cars, getCarPrice)
 
 	//Assert
@@ -153,7 +153,7 @@ func TestScrape(t *testing.T) {
 
 	url := "https://www.standvirtual.com/carros/desde-2014?search%5Bfilter_float_first_registration_year%3Ato%5D=2022&search%5Bfilter_float_mileage%3Ato%5D=10000&search%5Bfilter_float_price%3Ato%5D=20000&search%5Badvanced_search_expanded%5D=true"
 	//Act
-	var cars []Car
+	var cars []CarScrape
 	s.Scrape(url, &cars,
 		getCarModel,
 		getCarPrice,
