@@ -33,7 +33,7 @@ func CarScrapperToCar(carScrape scrapper.CarScrape) Car {
 	car := Car{
 		Car:     carScrape.Model,
 		Price:   stringToInt(carScrape.Price),
-		Mileage: stringToInt(carScrape.Mileage),
+		Mileage: stringToInt(strings.Split(carScrape.Mileage, "k")[0]),
 		Fuel:    carScrape.Fuel,
 		Year:    stringToInt(carScrape.Year),
 		Link:    carScrape.Link,

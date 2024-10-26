@@ -44,7 +44,7 @@ func TestGetCarModel(t *testing.T) {
 
 	//Act
 	var cars []CarScrape
-	s.StartCars(&cars, getCarModel)
+	s.startCars(&cars, GetCarModel)
 
 	//Assert
 	err := s.Collector.Visit(server.URL)
@@ -66,7 +66,7 @@ func TestGetCarPower(t *testing.T) {
 
 	//Act
 	var cars []CarScrape
-	s.StartCars(&cars, getCarPower)
+	s.startCars(&cars, GetCarPower)
 
 	//Assert
 	err := s.Collector.Visit(server.URL)
@@ -90,7 +90,7 @@ func TestGetCarDetails(t *testing.T) {
 
 	//Act
 	var cars []CarScrape
-	s.StartCars(&cars, getCarDetails)
+	s.startCars(&cars, GetCarDetails)
 
 	//Assert
 	err := s.Collector.Visit(server.URL)
@@ -112,7 +112,7 @@ func TestGetCarPrice(t *testing.T) {
 
 	//Act
 	var cars []CarScrape
-	s.StartCars(&cars, getCarPrice)
+	s.startCars(&cars, GetCarPrice)
 
 	//Assert
 	err := s.Collector.Visit(server.URL)
@@ -155,10 +155,10 @@ func TestScrape(t *testing.T) {
 	//Act
 	var cars []CarScrape
 	s.Scrape(url, &cars,
-		getCarModel,
-		getCarPrice,
-		getCarDetails,
-		getCarPower)
+		GetCarModel,
+		GetCarPrice,
+		GetCarDetails,
+		GetCarPower)
 
 	//Assert
 	assert.NotNil(t, len(cars))

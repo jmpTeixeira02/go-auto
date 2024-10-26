@@ -75,7 +75,7 @@ func (s *Scrapper) Scrape(url string, cars *[]CarScrape, carOptions ...CarOption
 	})
 
 	s.GetPaginationInfo(&pagination)
-	s.StartCars(cars, carOptions...)
+	s.startCars(cars, carOptions...)
 	err := s.Collector.Visit(url)
 	if err != nil {
 		panic(err)
@@ -86,7 +86,7 @@ func (s *Scrapper) Scrape(url string, cars *[]CarScrape, carOptions ...CarOption
 
 // Function to start fetching car information
 // Opts is used to select the fields to fetch
-func (s *Scrapper) StartCars(cars *[]CarScrape, opts ...CarOptions) {
+func (s *Scrapper) startCars(cars *[]CarScrape, opts ...CarOptions) {
 	// Fetches each card and processes
 	s.Collector.OnHTML(carCard, func(e *colly.HTMLElement) {
 		var car CarScrape
@@ -106,7 +106,7 @@ func (s *Scrapper) GetPaginationInfo(pages *Pagination) {
 	s.Collector.OnHTML(paginationSection, func(e *colly.HTMLElement) {
 		// If there is no pagination info, get it
 		if len(pages.pages) == 0 {
-			s.getPaginationInfo(pages, e)
+			s.updatePaginationInfo(pages, e)
 		}
 	})
 }
@@ -130,7 +130,7 @@ func isFinalPage(p *Pagination) bool {
 	return p.current == p.pages[len(p.pages)-1].Number
 }
 
-func (s *Scrapper) getPaginationInfo(p *Pagination, e *colly.HTMLElement) {
+func (s *Scrapper) updatePaginationInfo(p *Pagination, e *colly.HTMLElement) {
 	e.ForEach(paginationItem, func(_ int, e1 *colly.HTMLElement) {
 		i, err := strconv.Atoi(e1.Text)
 		if err != nil {
@@ -149,7 +149,7 @@ func (s *Scrapper) getPaginationInfo(p *Pagination, e *colly.HTMLElement) {
 
 // TitleSection contains a title with the brand and model and href to the link
 // Title follows the following format: Brand Model
-func getCarModel(c *CarScrape, e *colly.HTMLElement) {
+func GetCarModel(c *CarScrape, e *colly.HTMLElement) {
 	e.ForEach(titleSection, func(_ int, el *colly.HTMLElement) {
 		c.Model = strings.TrimSpace(el.Text)
 		el.ForEach("a", func(_ int, i_el *colly.HTMLElement) {
@@ -160,7 +160,7 @@ func getCarModel(c *CarScrape, e *colly.HTMLElement) {
 
 // Power Section has the displacement followed by the horsepower
 // "X XXX cm3 • XXX cv"
-func getCarPower(c *CarScrape, e *colly.HTMLElement) {
+func GetCarPower(c *CarScrape, e *colly.HTMLElement) {
 	e.ForEach(carPowerSection, func(_ int, el *colly.HTMLElement) {
 		c.Power = strings.TrimSpace(el.Text)
 	})
@@ -168,7 +168,7 @@ func getCarPower(c *CarScrape, e *colly.HTMLElement) {
 
 // Details section contains the mileage, fuelType and year
 // each of which it's identified by a detailParameter
-func getCarDetails(c *CarScrape, e *colly.HTMLElement) {
+func GetCarDetails(c *CarScrape, e *colly.HTMLElement) {
 	// Details Section
 	e.ForEach(detailsSection, func(_ int, el *colly.HTMLElement) {
 		// Detail
@@ -186,7 +186,7 @@ func getCarDetails(c *CarScrape, e *colly.HTMLElement) {
 	})
 }
 
-func getCarPrice(c *CarScrape, e *colly.HTMLElement) {
+func GetCarPrice(c *CarScrape, e *colly.HTMLElement) {
 	// Price
 	e.ForEach(priceSection, func(_ int, el *colly.HTMLElement) {
 		c.Price = strings.TrimSpace(el.Text)
