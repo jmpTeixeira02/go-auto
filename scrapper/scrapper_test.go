@@ -44,10 +44,10 @@ func TestGetCarModel(t *testing.T) {
 
 	//Act
 	var cars []Car
-	s.StartCars(&cars, GetCarModel)
+	s.StartCars(&cars, getCarModel)
 
 	//Assert
-	err := s.Visit(server.URL)
+	err := s.Collector.Visit(server.URL)
 	if err != nil {
 		panic(err)
 	}
@@ -66,10 +66,10 @@ func TestGetCarPower(t *testing.T) {
 
 	//Act
 	var cars []Car
-	s.StartCars(&cars, GetCarPower)
+	s.StartCars(&cars, getCarPower)
 
 	//Assert
-	err := s.Visit(server.URL)
+	err := s.Collector.Visit(server.URL)
 	if err != nil {
 		panic(err)
 	}
@@ -90,10 +90,10 @@ func TestGetCarDetails(t *testing.T) {
 
 	//Act
 	var cars []Car
-	s.StartCars(&cars, GetCarDetails)
+	s.StartCars(&cars, getCarDetails)
 
 	//Assert
-	err := s.Visit(server.URL)
+	err := s.Collector.Visit(server.URL)
 	if err != nil {
 		panic(err)
 	}
@@ -112,10 +112,10 @@ func TestGetCarPrice(t *testing.T) {
 
 	//Act
 	var cars []Car
-	s.StartCars(&cars, GetCarPrice)
+	s.StartCars(&cars, getCarPrice)
 
 	//Assert
-	err := s.Visit(server.URL)
+	err := s.Collector.Visit(server.URL)
 	if err != nil {
 		panic(err)
 	}
@@ -131,11 +131,11 @@ func TestPagination(t *testing.T) {
 	expected := 1325
 
 	//Act
-	var pagination Pagination
-	s.StartPagination(&pagination)
+	pagination := NewPagination()
+	s.GetPaginationInfo(&pagination)
 
 	//Assert
-	err := s.Visit(server.URL)
+	err := s.Collector.Visit(server.URL)
 	if err != nil {
 		panic(err)
 	}
@@ -143,4 +143,23 @@ func TestPagination(t *testing.T) {
 
 	assert.NotNil(t, pagination)
 	assert.EqualValues(t, expected, actual)
+}
+
+// This test runs without using a mock page
+// because it panics when trying to enter new pages
+func TestScrape(t *testing.T) {
+	// Arrange
+	s := New()
+
+	url := "https://www.standvirtual.com/carros/desde-2014?search%5Bfilter_float_first_registration_year%3Ato%5D=2022&search%5Bfilter_float_mileage%3Ato%5D=10000&search%5Bfilter_float_price%3Ato%5D=20000&search%5Badvanced_search_expanded%5D=true"
+	//Act
+	var cars []Car
+	s.Scrape(url, &cars,
+		getCarModel,
+		getCarPrice,
+		getCarDetails,
+		getCarPower)
+
+	//Assert
+	assert.NotNil(t, len(cars))
 }
