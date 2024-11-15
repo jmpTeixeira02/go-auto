@@ -10,11 +10,21 @@ import (
 type Config struct {
 	Url      string   `yaml:"url"`
 	Notifier Notifier `yaml:"notifier"`
+	Data     Data     `yaml:"data"`
 }
 
 type Notifier struct {
 	Service string         `yaml:"service"`
 	Config  notifierConfig `yaml:"config"`
+}
+
+type Data struct {
+	Service string     `yaml:"service"`
+	Config  dataConfig `yaml:"config"`
+}
+
+type dataConfig struct {
+	Address string `yaml:"address"`
 }
 
 type notifierConfig struct {

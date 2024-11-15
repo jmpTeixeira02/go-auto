@@ -4,9 +4,22 @@ import (
 	"go-auto/data"
 	"go-auto/notifier"
 	"go-auto/scrapper"
+	dataService "go-auto/service/data"
 )
 
-func GetCars(url string, notifier notifier.Notifier) error {
+type AutoService struct {
+	notifier notifier.Notifier
+	data     dataService.DataService
+}
+
+func New(notifier notifier.Notifier, dataService dataService.DataService) AutoService {
+	return AutoService{
+		notifier: notifier,
+		data:     dataService,
+	}
+}
+
+func (a *AutoService) GetCars(url string) error {
 	s := scrapper.New()
 
 	var carsScrape []scrapper.Car
@@ -26,10 +39,15 @@ func GetCars(url string, notifier notifier.Notifier) error {
 		cars[i] = data.CarScrapperToCar(car)
 	}
 
-	// TODO -> Save cars and only notify on new ones
+	// Process cars, give all and return only the non viewed ones
+	new, err := a.data.FindNewCars(cars)
+	if err != nil {
+		return err
+	}
 
-	for _, car := range cars {
-		go notifier.SendMessage(data.CarToString(car))
+	for i := range new {
+		a.notifier.SendMessage(data.CarToString(new[i]))
+		a.data.AddCar(new[i])
 		// Add to db if new car was sucessufly saved
 	}
 

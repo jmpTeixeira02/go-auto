@@ -4,6 +4,7 @@ import (
 	"go-auto/config"
 	"go-auto/notifier"
 	"go-auto/service"
+	"go-auto/service/data/sqlite"
 )
 
 func main() {
@@ -15,5 +16,13 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	service.GetCars(conf.Url, notifier)
+	data, err := sqlite.New("cars.db")
+	if err != nil {
+		panic(err)
+	}
+	s := service.New(notifier, data)
+	err = s.GetCars(conf.Url)
+	if err != nil {
+		panic(err)
+	}
 }
