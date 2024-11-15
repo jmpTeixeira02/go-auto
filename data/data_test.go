@@ -37,7 +37,7 @@ func TestCarScrapperToCar(t *testing.T) {
 		Displacement: 1342,
 		Link:         "test",
 	}
-	scrapped := scrapper.CarScrape{
+	scrapped := scrapper.Car{
 		Model:   "Toyota Yaris",
 		Price:   "10 000",
 		Mileage: "89 123",

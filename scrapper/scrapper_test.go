@@ -28,7 +28,10 @@ func localHtmlSetup() *httptest.Server {
 	handler.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
 		w.WriteHeader(http.StatusOK)
-		w.Write(getTestData())
+		_, err := w.Write(getTestData())
+		if err != nil {
+			panic(fmt.Errorf("error writing test data %w", err))
+		}
 	})
 	return httptest.NewServer(handler)
 }
@@ -37,16 +40,16 @@ func TestGetCarModel(t *testing.T) {
 	// Arrange
 	server := localHtmlSetup()
 	s := New()
-	expected := CarScrape{
+	expected := Car{
 		Model: "Mercedes-Benz A 200 d AMG Line",
 		Link:  "https://www.standvirtual.com/carros/anuncio/mercedes-benz-a-200-d-amg-line-ID8PKMqL.html",
 	}
 
-	//Act
-	var cars []CarScrape
+	// Act
+	var cars []Car
 	s.startCars(&cars, GetCarModel)
 
-	//Assert
+	// Assert
 	err := s.Collector.Visit(server.URL)
 	if err != nil {
 		panic(err)
@@ -60,15 +63,15 @@ func TestGetCarPower(t *testing.T) {
 	// Arrange
 	server := localHtmlSetup()
 	s := New()
-	expected := CarScrape{
+	expected := Car{
 		Power: "2 143 cm3 • 136 cv",
 	}
 
-	//Act
-	var cars []CarScrape
+	// Act
+	var cars []Car
 	s.startCars(&cars, GetCarPower)
 
-	//Assert
+	// Assert
 	err := s.Collector.Visit(server.URL)
 	if err != nil {
 		panic(err)
@@ -82,17 +85,17 @@ func TestGetCarDetails(t *testing.T) {
 	// Arrange
 	server := localHtmlSetup()
 	s := New()
-	expected := CarScrape{
+	expected := Car{
 		Mileage: "92 580 km",
 		Fuel:    "Diesel",
 		Year:    "2017",
 	}
 
-	//Act
-	var cars []CarScrape
+	// Act
+	var cars []Car
 	s.startCars(&cars, GetCarDetails)
 
-	//Assert
+	// Assert
 	err := s.Collector.Visit(server.URL)
 	if err != nil {
 		panic(err)
@@ -106,15 +109,15 @@ func TestGetCarPrice(t *testing.T) {
 	// Arrange
 	server := localHtmlSetup()
 	s := New()
-	expected := CarScrape{
+	expected := Car{
 		Price: "23 990",
 	}
 
-	//Act
-	var cars []CarScrape
+	// Act
+	var cars []Car
 	s.startCars(&cars, GetCarPrice)
 
-	//Assert
+	// Assert
 	err := s.Collector.Visit(server.URL)
 	if err != nil {
 		panic(err)
@@ -130,11 +133,11 @@ func TestPagination(t *testing.T) {
 	s := New()
 	expected := 1325
 
-	//Act
-	pagination := NewPagination()
-	s.GetPaginationInfo(&pagination)
+	// Act
+	pagination := newPagination()
+	s.getPaginationInfo(&pagination)
 
-	//Assert
+	// Assert
 	err := s.Collector.Visit(server.URL)
 	if err != nil {
 		panic(err)
@@ -152,14 +155,15 @@ func TestScrape(t *testing.T) {
 	s := New()
 
 	url := "https://www.standvirtual.com/carros/desde-2014?search%5Bfilter_float_first_registration_year%3Ato%5D=2022&search%5Bfilter_float_mileage%3Ato%5D=10000&search%5Bfilter_float_price%3Ato%5D=20000&search%5Badvanced_search_expanded%5D=true"
-	//Act
-	var cars []CarScrape
-	s.Scrape(url, &cars,
+	// Act
+	var cars []Car
+	err := s.Scrape(url, &cars,
 		GetCarModel,
 		GetCarPrice,
 		GetCarDetails,
 		GetCarPower)
 
-	//Assert
+	// Assert
+	assert.Nil(t, err)
 	assert.NotNil(t, len(cars))
 }

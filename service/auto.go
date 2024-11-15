@@ -2,14 +2,15 @@ package service
 
 import (
 	"go-auto/data"
+	"go-auto/notifier"
 	"go-auto/scrapper"
 )
 
-func GetCars(url string) []data.Car {
+func GetCars(url string, notifier notifier.Notifier) error {
 	s := scrapper.New()
 
-	var carsScrape []scrapper.CarScrape
-	s.Scrape(
+	var carsScrape []scrapper.Car
+	err := s.Scrape(
 		url,
 		&carsScrape,
 		scrapper.GetCarModel,
@@ -17,9 +18,20 @@ func GetCars(url string) []data.Car {
 		scrapper.GetCarDetails,
 		scrapper.GetCarPrice,
 	)
+	if err != nil {
+		return err
+	}
 	cars := make([]data.Car, len(carsScrape))
 	for i, car := range carsScrape {
 		cars[i] = data.CarScrapperToCar(car)
 	}
-	return cars
+
+	// TODO -> Save cars and only notify on new ones
+
+	for _, car := range cars {
+		go notifier.SendMessage(data.CarToString(car))
+		// Add to db if new car was sucessufly saved
+	}
+
+	return nil
 }

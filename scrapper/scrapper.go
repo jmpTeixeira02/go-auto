@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
-	"strings"
 
 	"github.com/gocolly/colly"
 )
@@ -24,7 +23,7 @@ const (
 	paginationItem    = ".ooa-g4wbjr.e1y5xfcl0"
 )
 
-type CarScrape struct {
+type Car struct {
 	Model   string
 	Price   string
 	Mileage string
@@ -34,11 +33,11 @@ type CarScrape struct {
 	Link    string
 }
 
-type Pagination struct {
-	pages   []Page
+type pagination struct {
+	pages   []page
 	current int
 }
-type Page struct {
+type page struct {
 	Url    string
 	Number int
 }
@@ -48,11 +47,11 @@ type Scrapper struct {
 	Host      string
 }
 
-type CarOptions func(*CarScrape, *colly.HTMLElement)
+type carOptions func(*Car, *colly.HTMLElement)
 
-func NewPagination() Pagination {
-	return Pagination{
-		pages:   []Page{},
+func newPagination() pagination {
+	return pagination{
+		pages:   []page{},
 		current: 1,
 	}
 }
@@ -67,41 +66,39 @@ func New() Scrapper {
 // Function used to scrape the website
 // URL should already contain all the filters and be on page 1
 // Pass the desired details to be fetched on carOptions
-func (s *Scrapper) Scrape(url string, cars *[]CarScrape, carOptions ...CarOptions) {
-	pagination := NewPagination()
+func (s *Scrapper) Scrape(url string, cars *[]Car, carOptions ...carOptions) error {
+	pagination := newPagination()
 
 	s.Collector.OnRequest(func(r *colly.Request) {
 		fmt.Printf("Visiting page: %d\n", pagination.current)
 	})
 
-	s.GetPaginationInfo(&pagination)
+	s.getPaginationInfo(&pagination)
 	s.startCars(cars, carOptions...)
 	err := s.Collector.Visit(url)
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("error visiting url %w", err)
 	}
 
-	s.GoToNextPage(&pagination)
+	return s.goToNextPage(&pagination)
 }
 
 // Function to start fetching car information
 // Opts is used to select the fields to fetch
-func (s *Scrapper) startCars(cars *[]CarScrape, opts ...CarOptions) {
+func (s *Scrapper) startCars(cars *[]Car, opts ...carOptions) {
 	// Fetches each card and processes
 	s.Collector.OnHTML(carCard, func(e *colly.HTMLElement) {
-		var car CarScrape
+		var car Car
 		for _, opt := range opts {
 			opt(&car, e)
 		}
-		// Check if it's already in DB
 		*cars = append(*cars, car)
-		// Notify
 	})
 }
 
 // Function to start fetching pagination information
 // Gets the last page number and visits all pages
-func (s *Scrapper) GetPaginationInfo(pages *Pagination) {
+func (s *Scrapper) getPaginationInfo(pages *pagination) {
 	// Fetch Pagination Info and process it
 	s.Collector.OnHTML(paginationSection, func(e *colly.HTMLElement) {
 		// If there is no pagination info, get it
@@ -112,25 +109,25 @@ func (s *Scrapper) GetPaginationInfo(pages *Pagination) {
 }
 
 // If current page is not next visit the next one
-func (s *Scrapper) GoToNextPage(p *Pagination) {
+func (s *Scrapper) goToNextPage(p *pagination) error {
 	if isFinalPage(p) {
-		return
+		return nil
 	}
+	url := p.pages[p.current].Url
 	p.current += 1
-	url := p.pages[p.current-1].Url
 	err := s.Collector.Visit(url)
 	if err != nil {
-		panic(fmt.Errorf("error visiting page! %w", err))
+		return fmt.Errorf("error visiting page! %w", err)
 	}
-	s.GoToNextPage(p)
+	return s.goToNextPage(p)
 }
 
 // Check if current page is the last one
-func isFinalPage(p *Pagination) bool {
+func isFinalPage(p *pagination) bool {
 	return p.current == p.pages[len(p.pages)-1].Number
 }
 
-func (s *Scrapper) updatePaginationInfo(p *Pagination, e *colly.HTMLElement) {
+func (s *Scrapper) updatePaginationInfo(p *pagination, e *colly.HTMLElement) {
 	e.ForEach(paginationItem, func(_ int, e1 *colly.HTMLElement) {
 		i, err := strconv.Atoi(e1.Text)
 		if err != nil {
@@ -140,55 +137,9 @@ func (s *Scrapper) updatePaginationInfo(p *Pagination, e *colly.HTMLElement) {
 		if err != nil {
 			panic(err)
 		}
-		p.pages = append(p.pages, Page{
+		p.pages = append(p.pages, page{
 			Url:    url,
 			Number: i,
 		})
-	})
-}
-
-// TitleSection contains a title with the brand and model and href to the link
-// Title follows the following format: Brand Model
-func GetCarModel(c *CarScrape, e *colly.HTMLElement) {
-	e.ForEach(titleSection, func(_ int, el *colly.HTMLElement) {
-		c.Model = strings.TrimSpace(el.Text)
-		el.ForEach("a", func(_ int, i_el *colly.HTMLElement) {
-			c.Link = i_el.Attr("href")
-		})
-	})
-}
-
-// Power Section has the displacement followed by the horsepower
-// "X XXX cm3 • XXX cv"
-func GetCarPower(c *CarScrape, e *colly.HTMLElement) {
-	e.ForEach(carPowerSection, func(_ int, el *colly.HTMLElement) {
-		c.Power = strings.TrimSpace(el.Text)
-	})
-}
-
-// Details section contains the mileage, fuelType and year
-// each of which it's identified by a detailParameter
-func GetCarDetails(c *CarScrape, e *colly.HTMLElement) {
-	// Details Section
-	e.ForEach(detailsSection, func(_ int, el *colly.HTMLElement) {
-		// Detail
-		e.ForEach(detail, func(_ int, i_el *colly.HTMLElement) {
-			dataParameter := i_el.Attr(detailParameter)
-			switch dataParameter {
-			case mileageParameter:
-				c.Mileage = strings.TrimSpace(i_el.Text)
-			case fuelParameter:
-				c.Fuel = strings.TrimSpace(i_el.Text)
-			case yearParameter:
-				c.Year = strings.TrimSpace(i_el.Text)
-			}
-		})
-	})
-}
-
-func GetCarPrice(c *CarScrape, e *colly.HTMLElement) {
-	// Price
-	e.ForEach(priceSection, func(_ int, el *colly.HTMLElement) {
-		c.Price = strings.TrimSpace(el.Text)
 	})
 }

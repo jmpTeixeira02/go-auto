@@ -1,6 +1,7 @@
 package data
 
 import (
+	"fmt"
 	"go-auto/scrapper"
 	"strconv"
 	"strings"
@@ -17,6 +18,10 @@ type Car struct {
 	Link         string
 }
 
+func CarToString(car Car) string {
+	return fmt.Sprintf("%s | %d € | %d KM | %s | %d | %d HP | %d cm3\n%s\n", car.Car, car.Price, car.Mileage, car.Fuel, car.Year, car.Hp, car.Displacement, car.Link)
+}
+
 func separateHpDisplace(str string) []string {
 	return strings.Split(str, "•")
 }
@@ -29,16 +34,16 @@ func stringToInt(str string) int {
 	return res
 }
 
-func CarScrapperToCar(carScrape scrapper.CarScrape) Car {
+func CarScrapperToCar(scrapped scrapper.Car) Car {
 	car := Car{
-		Car:     carScrape.Model,
-		Price:   stringToInt(carScrape.Price),
-		Mileage: stringToInt(strings.Split(carScrape.Mileage, "k")[0]),
-		Fuel:    carScrape.Fuel,
-		Year:    stringToInt(carScrape.Year),
-		Link:    carScrape.Link,
+		Car:     scrapped.Model,
+		Price:   stringToInt(scrapped.Price),
+		Mileage: stringToInt(strings.Split(scrapped.Mileage, "k")[0]),
+		Fuel:    scrapped.Fuel,
+		Year:    stringToInt(scrapped.Year),
+		Link:    scrapped.Link,
 	}
-	err := UpdateCarPower(&car, carScrape.Power)
+	err := UpdateCarPower(&car, scrapped.Power)
 	if err != nil {
 		panic(err)
 	}
