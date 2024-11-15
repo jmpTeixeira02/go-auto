@@ -1,41 +1,28 @@
 package notifier
 
 import (
-	"fmt"
-
-	"github.com/bwmarrin/discordgo"
+	"errors"
+	"go-auto/config"
 )
 
-type DiscordNotifier struct {
-	Session *discordgo.Session
-	Channel *discordgo.Channel
+type notifyService string
+
+const (
+	notifyDiscord  notifyService = "discord"
+	notifyTerminal notifyService = "terminal"
+)
+
+type Notifier interface {
+	SendMessage(string) error
 }
 
-func New(token string, receiver string) DiscordNotifier {
-
-	discord, err := discordgo.New("Bot " + token)
-	if err != nil {
-		panic(fmt.Errorf("error creating Discord session %w", err))
-	}
-
-	err = discord.Open()
-	if err != nil {
-		panic(fmt.Errorf("error opening connection %w", err))
-	}
-	channel, err := discord.UserChannelCreate(receiver)
-	if err != nil {
-		panic(fmt.Errorf("error creating DM channel %w", err))
-	}
-
-	return DiscordNotifier{
-		Session: discord,
-		Channel: channel,
-	}
-}
-
-func (d *DiscordNotifier) sendMessage(str string) {
-	_, err := d.Session.ChannelMessageSend(d.Channel.ID, str)
-	if err != nil {
-		panic(fmt.Errorf("Error sending message %w", err))
+func NewNotifier(notifier config.Notifier) (Notifier, error) {
+	switch notifyService(notifier.Service) {
+	case notifyDiscord:
+		return newDiscordNotifier(notifier.Config.Token, notifier.Config.Receiver), nil
+	case notifyTerminal:
+		return newTerminalNotifier(), nil
+	default:
+		return nil, errors.New("invalid notifier")
 	}
 }
