@@ -7,6 +7,7 @@ import (
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 type Car struct {
@@ -25,7 +26,7 @@ type SQLService struct {
 }
 
 func New(p string) (dataService.DataService, error) {
-	db, err := gorm.Open(sqlite.Open(p), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(p), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
 	if err != nil {
 		return nil, fmt.Errorf("Failed to connect to the db %w", err)
 	}
