@@ -9,6 +9,7 @@ import (
 
 type Config struct {
 	Url      string   `yaml:"url"`
+	Refresh  int      `yaml:"refresh_min"`
 	Notifier Notifier `yaml:"notifier"`
 	Data     Data     `yaml:"data"`
 }

@@ -7,6 +7,8 @@ import (
 	"go-auto/notifier"
 	"go-auto/scrapper"
 	dataService "go-auto/service/data"
+	"log"
+	"os"
 	"os/signal"
 	"sync"
 	"syscall"
@@ -19,6 +21,8 @@ type AutoService struct {
 	ctx   context.Context
 	errCh chan error
 	wg    sync.WaitGroup
+
+	log *log.Logger
 }
 
 func New(notifier notifier.Notifier, dataService dataService.DataService) AutoService {
@@ -29,6 +33,7 @@ func New(notifier notifier.Notifier, dataService dataService.DataService) AutoSe
 		data:     dataService,
 		ctx:      ctx,
 		wg:       sync.WaitGroup{},
+		log:      log.New(os.Stdout, "", 0),
 	}
 }
 
