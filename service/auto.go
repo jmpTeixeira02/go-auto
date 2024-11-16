@@ -28,7 +28,6 @@ func New(notifier notifier.Notifier, dataService dataService.DataService) AutoSe
 		notifier: notifier,
 		data:     dataService,
 		ctx:      ctx,
-		errCh:    make(chan error),
 		wg:       sync.WaitGroup{},
 	}
 }
@@ -62,23 +61,29 @@ func (a *AutoService) GetCars(url string) error {
 	return a.addNewCars(new)
 }
 
-func (a *AutoService) addNewCars(new []data.Car) error {
-	nNew := len(new)
-	a.wg.Add(nNew)
-	a.errCh = make(chan error)
-	for i := range new {
-		go a.addCar(new[i])
+func (a *AutoService) addNewCars(cars []data.Car) error {
+	nCars := len(cars)
+	a.wg.Add(nCars)
+	a.errCh = make(chan error, nCars)
+	for i := range cars {
+		go a.addCar(cars[i])
 	}
 	a.wg.Wait()
 
 	var err error
-	for e := range a.errCh {
-		err = errors.Join(err, e)
+	for {
+		select {
+		case e := <-a.errCh:
+			err = errors.Join(err, e)
+		default:
+			close(a.errCh)
+			return err
+		}
 	}
-	return err
 }
 
 func (a *AutoService) addCar(car data.Car) {
+	defer a.wg.Done()
 	err := a.notifier.SendMessage(data.CarToString(car))
 	if err != nil {
 		a.errCh <- err
@@ -87,7 +92,5 @@ func (a *AutoService) addCar(car data.Car) {
 	_, err = a.data.AddCar(car)
 	if err != nil {
 		a.errCh <- err
-		return
 	}
-	a.wg.Done()
 }
